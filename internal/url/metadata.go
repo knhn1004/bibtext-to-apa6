@@ -12,12 +12,12 @@ import (
 )
 
 type Metadata struct {
-	Title       string
-	Author      string
-	Year        string
-	Publisher   string
-	URL         string
-	AccessDate  time.Time
+	Title      string
+	Author     string
+	Year       string
+	Publisher  string
+	URL        string
+	AccessDate time.Time
 }
 
 // ExtractMetadata tries HTTP first, then falls back to Playwright if that fails
@@ -293,8 +293,8 @@ func (m *Metadata) ToAPAFormat() string {
 		result += fmt.Sprintf(". %s", m.Publisher)
 	}
 
-	result += fmt.Sprintf(". Retrieved %s, from %s", 
-		m.AccessDate.Format("January 2, 2006"), 
+	result += fmt.Sprintf(". Retrieved %s, from %s",
+		m.AccessDate.Format("January 2, 2006"),
 		m.URL)
 
 	return result

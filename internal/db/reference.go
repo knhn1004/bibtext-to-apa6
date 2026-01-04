@@ -50,7 +50,7 @@ func (db *DB) ListReferences(projectID int) ([]*Reference, error) {
 	          FROM citations 
 	          WHERE project_id = ? 
 	          ORDER BY reference_num`
-	
+
 	rows, err := db.conn.Query(query, projectID)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (db *DB) DeleteReference(id int) error {
 
 func (db *DB) GetReference(id int) (*Reference, error) {
 	query := `SELECT id, project_id, reference_num, bibtex_entry, apa_format, source_type, created_at FROM citations WHERE id = ?`
-	
+
 	var r Reference
 	err := db.conn.QueryRow(query, id).Scan(&r.ID, &r.ProjectID, &r.ReferenceNum, &r.BibtexEntry, &r.APAFormat, &r.SourceType, &r.CreatedAt)
 	if err != nil {
@@ -102,30 +102,30 @@ func (db *DB) GetReferencesByNumbers(projectID int, numbers []int) ([]*Reference
 	if len(numbers) == 0 {
 		return []*Reference{}, nil
 	}
-	
+
 	// Build query with placeholders
 	placeholders := make([]string, len(numbers))
 	args := make([]interface{}, len(numbers)+1)
 	args[0] = projectID
-	
+
 	for i, num := range numbers {
 		placeholders[i] = "?"
 		args[i+1] = num
 	}
-	
+
 	query := fmt.Sprintf(`
 		SELECT id, project_id, reference_num, bibtex_entry, apa_format, source_type, created_at 
 		FROM citations 
 		WHERE project_id = ? AND reference_num IN (%s)
 		ORDER BY reference_num
 	`, strings.Join(placeholders, ","))
-	
+
 	rows, err := db.conn.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var references []*Reference
 	for rows.Next() {
 		var r Reference
@@ -135,28 +135,28 @@ func (db *DB) GetReferencesByNumbers(projectID int, numbers []int) ([]*Reference
 		}
 		references = append(references, &r)
 	}
-	
+
 	return references, rows.Err()
 }
 
 func (db *DB) UpdateReferenceNumbers(projectID int) error {
 	// Get all references for the project ordered by current reference_num
 	query := `SELECT id, reference_num FROM citations WHERE project_id = ? ORDER BY reference_num`
-	
+
 	rows, err := db.conn.Query(query, projectID)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
-	
+
 	// Collect all references
 	type refUpdate struct {
-		id int
+		id     int
 		newNum int
 	}
 	var updates []refUpdate
 	newNum := 1
-	
+
 	for rows.Next() {
 		var id, oldNum int
 		if err := rows.Scan(&id, &oldNum); err != nil {
@@ -165,11 +165,11 @@ func (db *DB) UpdateReferenceNumbers(projectID int) error {
 		updates = append(updates, refUpdate{id: id, newNum: newNum})
 		newNum++
 	}
-	
+
 	if err := rows.Err(); err != nil {
 		return err
 	}
-	
+
 	// Update each reference with its new number
 	updateQuery := `UPDATE citations SET reference_num = ? WHERE id = ?`
 	for _, u := range updates {
@@ -177,6 +177,6 @@ func (db *DB) UpdateReferenceNumbers(projectID int) error {
 			return fmt.Errorf("failed to update reference %d: %w", u.id, err)
 		}
 	}
-	
+
 	return nil
 }

@@ -28,7 +28,7 @@ func copyToClipboardDarwin(text string) error {
 	// For macOS, let's use a simpler approach with RTF
 	// First, let's try with a temporary HTML file and textutil
 	html := ConvertToHTML(text)
-	
+
 	// Create HTML content
 	// If HTML already contains <p> tags (multiple references), use as-is
 	// Otherwise wrap in a single paragraph
@@ -38,7 +38,7 @@ func copyToClipboardDarwin(text string) error {
 	} else {
 		bodyContent = fmt.Sprintf(`<p style="margin-left: 0.5in; text-indent: -0.5in; margin-top: 0; margin-bottom: 0; line-height: 1.15;">%s</p>`, html)
 	}
-	
+
 	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head>
@@ -48,14 +48,14 @@ func copyToClipboardDarwin(text string) error {
 %s
 </body>
 </html>`, bodyContent)
-	
+
 	// Write HTML to temp file
 	tmpFile := "/tmp/bibapa-clipboard.html"
 	if err := os.WriteFile(tmpFile, []byte(htmlContent), 0644); err != nil {
 		return copyPlainText(text)
 	}
 	defer os.Remove(tmpFile)
-	
+
 	// Convert HTML to RTF using textutil
 	rtfFile := "/tmp/bibapa-clipboard.rtf"
 	cmd := exec.Command("textutil", "-convert", "rtf", "-output", rtfFile, tmpFile)
@@ -63,7 +63,7 @@ func copyToClipboardDarwin(text string) error {
 		return copyPlainText(text)
 	}
 	defer os.Remove(rtfFile)
-	
+
 	// Use osascript to set the clipboard with RTF data
 	script := fmt.Sprintf(`
 set rtfFile to POSIX file "%s"
@@ -78,7 +78,7 @@ set the clipboard to {Unicode text:"%s", «class RTF »:rtfData}
 		fmt.Fprintf(os.Stderr, "osascript error: %v, output: %s\n", err, output)
 		return copyPlainText(text)
 	}
-	
+
 	return nil
 }
 
@@ -86,7 +86,7 @@ set the clipboard to {Unicode text:"%s", «class RTF »:rtfData}
 func copyToClipboardWindows(text string) error {
 	// For Windows, we'll use PowerShell to set clipboard with HTML
 	html := ConvertToHTML(text)
-	
+
 	// Create a PowerShell script that sets both HTML and text formats
 	script := fmt.Sprintf(`
 $html = @"
@@ -107,13 +107,13 @@ $dataObject.SetData([System.Windows.Forms.DataFormats]::Html, $html)
 $dataObject.SetData([System.Windows.Forms.DataFormats]::Text, $text)
 [System.Windows.Forms.Clipboard]::SetDataObject($dataObject, $true)
 `, html, StripFormatting(text))
-	
+
 	cmd := exec.Command("powershell", "-Command", script)
 	if err := cmd.Run(); err != nil {
 		// Fallback to plain text
 		return copyPlainText(text)
 	}
-	
+
 	return nil
 }
 
@@ -121,28 +121,28 @@ $dataObject.SetData([System.Windows.Forms.DataFormats]::Text, $text)
 func copyToClipboardLinux(text string) error {
 	// For Linux, we'll try xclip with HTML format
 	html := ConvertToHTML(text)
-	
+
 	// Try to use xclip with HTML target
 	cmd := exec.Command("xclip", "-selection", "clipboard", "-t", "text/html")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return copyPlainText(text)
 	}
-	
+
 	if err := cmd.Start(); err != nil {
 		return copyPlainText(text)
 	}
-	
+
 	_, err = stdin.Write([]byte(html))
 	if err != nil {
 		return copyPlainText(text)
 	}
 	stdin.Close()
-	
+
 	if err := cmd.Wait(); err != nil {
 		return copyPlainText(text)
 	}
-	
+
 	// Also set plain text
 	return copyPlainText(text)
 }
@@ -150,7 +150,7 @@ func copyToClipboardLinux(text string) error {
 // copyPlainText is a fallback that copies plain text without formatting
 func copyPlainText(text string) error {
 	plainText := StripFormatting(text)
-	
+
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
@@ -162,26 +162,26 @@ func copyPlainText(text string) error {
 	default:
 		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}
-	
+
 	if runtime.GOOS != "windows" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
 			return err
 		}
-		
+
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-		
+
 		_, err = stdin.Write([]byte(plainText))
 		if err != nil {
 			return err
 		}
 		stdin.Close()
-		
+
 		return cmd.Wait()
 	}
-	
+
 	return cmd.Run()
 }
 

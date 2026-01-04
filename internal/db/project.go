@@ -23,7 +23,7 @@ func (db *DB) CreateProject(name string) (*Project, error) {
 
 func (db *DB) GetProject(id int) (*Project, error) {
 	query := `SELECT id, name, created_at, updated_at FROM projects WHERE id = ?`
-	
+
 	var p Project
 	err := db.conn.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.CreatedAt, &p.UpdatedAt)
 	if err == sql.ErrNoRows {
@@ -38,7 +38,7 @@ func (db *DB) GetProject(id int) (*Project, error) {
 
 func (db *DB) GetProjectByName(name string) (*Project, error) {
 	query := `SELECT id, name, created_at, updated_at FROM projects WHERE name = ?`
-	
+
 	var p Project
 	err := db.conn.QueryRow(query, name).Scan(&p.ID, &p.Name, &p.CreatedAt, &p.UpdatedAt)
 	if err == sql.ErrNoRows {
@@ -53,7 +53,7 @@ func (db *DB) GetProjectByName(name string) (*Project, error) {
 
 func (db *DB) ListProjects() ([]*Project, error) {
 	query := `SELECT id, name, created_at, updated_at FROM projects ORDER BY name`
-	
+
 	rows, err := db.conn.Query(query)
 	if err != nil {
 		return nil, err

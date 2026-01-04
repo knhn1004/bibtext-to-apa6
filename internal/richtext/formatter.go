@@ -20,10 +20,10 @@ func ConvertToRTF(text string) string {
 
 	// Process the text to handle italics
 	processedText := processItalics(text)
-	
+
 	// RTF footer
 	rtf += processedText + "}"
-	
+
 	return rtf
 }
 
@@ -36,7 +36,7 @@ func processItalics(text string) string {
 		content := match[1 : len(match)-1]
 		return fmt.Sprintf(`\i %s\i0 `, escapeRTF(content))
 	})
-	
+
 	return escapeRTF(result)
 }
 
@@ -48,11 +48,11 @@ func escapeRTF(s string) string {
 		// Already processed, don't escape
 		return s
 	}
-	
+
 	s = strings.ReplaceAll(s, `\`, `\\`)
 	s = strings.ReplaceAll(s, `{`, `\{`)
 	s = strings.ReplaceAll(s, `}`, `\}`)
-	
+
 	// Handle unicode characters
 	var result strings.Builder
 	for _, r := range s {
@@ -63,7 +63,7 @@ func escapeRTF(s string) string {
 			result.WriteRune(r)
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -72,7 +72,7 @@ func ConvertToHTML(text string) string {
 	// Replace *text* with HTML italic tags
 	re := regexp.MustCompile(`\*([^*]+)\*`)
 	result := re.ReplaceAllString(text, `<i>$1</i>`)
-	
+
 	// Escape HTML entities (but preserve our italic tags)
 	result = strings.ReplaceAll(result, "&", "&amp;")
 	// Don't escape < and > that are part of our tags
@@ -82,7 +82,7 @@ func ConvertToHTML(text string) string {
 	temp = strings.ReplaceAll(temp, ">", "&gt;")
 	temp = strings.ReplaceAll(temp, "§ITALIC_START§", "<i>")
 	result = strings.ReplaceAll(temp, "§ITALIC_END§", "</i>")
-	
+
 	// Convert double newlines to paragraph breaks for proper formatting in word processors
 	// Each reference becomes its own paragraph with APA hanging indent style
 	paragraphs := strings.Split(result, "\n\n")
@@ -101,7 +101,7 @@ func ConvertToHTML(text string) string {
 		}
 		result = strings.Join(htmlParagraphs, "\n")
 	}
-	
+
 	return result
 }
 

@@ -20,13 +20,13 @@ type Project struct {
 }
 
 type Reference struct {
-	ID            int
-	ProjectID     int
-	ReferenceNum  int    // Stable number within project
-	BibtexEntry   string
-	APAFormat     string
-	SourceType    string
-	CreatedAt     time.Time
+	ID           int
+	ProjectID    int
+	ReferenceNum int // Stable number within project
+	BibtexEntry  string
+	APAFormat    string
+	SourceType   string
+	CreatedAt    time.Time
 }
 
 func NewDB(path string) (*DB, error) {
@@ -67,7 +67,7 @@ func (db *DB) Migrate() error {
 			return fmt.Errorf("failed to execute query: %v", err)
 		}
 	}
-	
+
 	// Check if reference_num column exists and add it if not
 	var count int
 	err := db.conn.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('citations') WHERE name='reference_num'`).Scan(&count)
@@ -76,14 +76,14 @@ func (db *DB) Migrate() error {
 		if _, err := db.conn.Exec(`ALTER TABLE citations ADD COLUMN reference_num INTEGER DEFAULT 0`); err != nil {
 			return fmt.Errorf("failed to add reference_num column: %v", err)
 		}
-		
+
 		// Update existing references with sequential numbers per project
 		rows, err := db.conn.Query(`SELECT DISTINCT project_id FROM citations`)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
-		
+
 		var projectIDs []int
 		for rows.Next() {
 			var pid int
@@ -92,7 +92,7 @@ func (db *DB) Migrate() error {
 			}
 			projectIDs = append(projectIDs, pid)
 		}
-		
+
 		for _, pid := range projectIDs {
 			if _, err := db.conn.Exec(`
 				UPDATE citations 
@@ -108,6 +108,6 @@ func (db *DB) Migrate() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
